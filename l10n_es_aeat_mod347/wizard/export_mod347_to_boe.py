@@ -36,7 +36,8 @@ class L10nEsAeatMod347ExportToBoe(orm.TransientModel):
             2-4 	    Modelo Declaración
             5-8 	    Ejercicio
             9-17 	    NIF del declarante
-            18-57 	    Apellidos y nombre o razón social del declarante
+            18-57 	    Apellidos y nombre, razón social del declarante o
+                        denominación del declarante
             58          Tipo de soporte
             59-67 	    Teléfono contacto
             68-107      Apellidos y nombre contacto
@@ -44,10 +45,15 @@ class L10nEsAeatMod347ExportToBoe(orm.TransientModel):
             121-122 	Declaración complementaria o substitutiva
             123-135 	Número identificativo de la declaración anterior
             136-144 	Número total de personas y entidades
-            145-159 	Importe total de las operaciones
-            160-168 	Número total de inmuebles
-            169-183 	Importe total de las operaciones de arrendamiento
-            184-390 	Blancos
+            *(old)145-159 	Importe total de las operaciones
+            145-160     Importe anual de las operaciones
+            *(old)160-168 	Número total de inmuebles
+            161-169     Número total de inmuebles
+            *(old)169-183 	Importe total de las operaciones dearrendamiento
+            170-185     Importe total de las operaciones de
+                        arrendamiento de locales de negocio
+            *(old)184-390 	Blancos
+            186-390     Blancos
             391-399 	NIF del representante legal
             400-487 	Blancos
             488-500 	Sello electrónico
@@ -70,7 +76,8 @@ class L10nEsAeatMod347ExportToBoe(orm.TransientModel):
         # Persona de contacto (Apellidos y nombre)
         text += self._formatString(report.contact_name, 40)
         # Número identificativo de la declaración
-        text += self._formatNumber(report.number, 13)
+        text += self._formatNumber(report.number, 3)
+        text += self._formatNumber(0, 10)
         # Declaración complementaria o substitutiva
         text += self._formatString(report.type, 2).replace('N', ' ')
         # Número identificativo de la declaración anterior
@@ -78,12 +85,11 @@ class L10nEsAeatMod347ExportToBoe(orm.TransientModel):
         # Número total de personas y entidades
         text += self._formatNumber(report.total_partner_records, 9)
         # Importe total de las operaciones
-        text += self._formatNumber(report.total_amount, 13, 2, True)
+        text += self._formatNumber(report.total_amount, 14, 2, True)
         # Número total de inmuebles
         text += self._formatNumber(report.total_real_state_records, 9)
         # Importe total de las operaciones de arrendamiento
-        text += self._formatNumber(report.total_real_state_amount, 13, 2,
-                                   True)
+        text += self._formatNumber(report.total_real_state_amount, 14, 2, True)        
         # Blancos
         text += 205 * ' '
         # NIF del representante legal
@@ -98,7 +104,8 @@ class L10nEsAeatMod347ExportToBoe(orm.TransientModel):
         return text
 
     def _get_formated_partner_record(self, report, partner_record):
-        """Returns a type 2, partner, formated record
+        """
+        Returns a type 2, partner, formated record
 
         Format of the record:
             Tipo de Registro 2 – Registro de declarado
@@ -116,33 +123,57 @@ class L10nEsAeatMod347ExportToBoe(orm.TransientModel):
             77-80       Código provincia/país
             81          Blancos
             82          Clave de operación
-            83-98 	    Importe de las operaciones
-            98          Operación de seguro
-            99          Arrendamiento local negocio
-            100-114     Importe percibido en metálico
-            115-129     Importe percibido por transmisiones de inmuebles
+            83-98 	    Importe anual de las operaciones
+            *(old)98          Operación de seguro
+            99          Operación de seguro
+            *(old)99          Arrendamiento local negocio
+            100          Arrendamiento local negocio
+            *(old)100-114     Importe percibido en metálico
+            101-115     Importe percibido en metálico
+            *(old)115-129     Importe percibido por transmisiones de inmuebles
                         sujetas a IVA
-            130-134     Año de devengo de las operaciones en efectivo
+            116-131     Importe anual percibido por transmisiones de inmuebles
+                        sujetas a IVA                        
+            *(old)130-134     Año de devengo de las operaciones en efectivo
+            132-135     Ejercicio
+            *(old)135-151     Importe de las operaciones del primer trimestre
             136-151     Importe de las operaciones del primer trimestre
+            *(old)151-167     Importe percibido por transmisiones de inmuebles
+                        sujetas a IVA primer trimestre
             152-167     Importe percibido por transmisiones de inmuebles
-                        sujetas a IVA del primer trimestre
+                        sujetas a IVA primer trimestre                        
             168-183     Importe de las operaciones del segundo trimestre
-            184-199     Importe percibido por transmisiones de inmuebles
-                        sujetas a IVA del segundo trimestre
+            183-199     Importe percibido por transmisiones de inmuebles
+                        sujetas a IVA segundo trimestre
             200-215     Importe de las operaciones del tercer trimestre
-            216-231     Importe percibido por transmisiones de inmuebles
-                        sujetas a IVA del tercer trimestre
+            *(old)215-231     Importe percibido por transmisiones de inmuebles
+                        sujetas a IVA tercer trimestre
+            *216-231    Importe percibido por transmisiones de inmuebles
+                        sujetas a IVA tercer trimestre
+            *(old)231-247     Importe de las operaciones del cuarto trimestre
             232-247     Importe de las operaciones del cuarto trimestre
+            *(old)247-263     Importe percibido por transmisiones de inmuebles
+                        sujetAs a IVA cuarto trimestre
             248-263     Importe percibido por transmisiones de inmuebles
-                        sujetas a IVA del cuarto trimestre
-            264-280     NIF del operador comunitario
-            281         'X' si aplica el régimen especial de criterio de caja
-            282         'X' si son operaciones con inversión de sujeto pasivo
-            283         'X' si son operaciones vinculadas al régimen de
-                        depósito distinto del aduanero
-            284-299     Importe de la operaciones anuales de criterio de caja
-            300-500     Blancos
+                        sujetAs a IVA cuarto trimestre
+                        
+            #############
+            TODO: Los dejamos en blanco/0 pq no disponemos de esta informacion
+            264-280     NIF operador comunitario
+            281         Operaciones régimen especial criterio de caja IVA
+            282         Operación con inversión del sujeto pasivo
+            283         Operación con bienes vinculados o destinados
+                        a vincularse al régimen de depósito distinto
+                        del aduanero
+            284-299     Importe anual de las operaciones devengadas 
+                        conforme al criterio de cja del iva
+            #############            
+                    
+            *(old)264-500     Blancos
+            *(old)488-500     Sello electrónico
+            300-500    Blancos
         """
+              
         text = ''
         # Tipo de Registro
         text += '2'
@@ -162,12 +193,14 @@ class L10nEsAeatMod347ExportToBoe(orm.TransientModel):
         text += 'D'
         # Código provincia
         text += self._formatNumber(partner_record.partner_state_code, 2)
+        # Código Pais
+        text += self._formatString(partner_record.partner_country_code, 2)
         # Blancos
-        text += 3 * ' '
+        text += ' '
         # Clave de operación
         text += self._formatString(partner_record.operation_key, 1)
         # Importe de las operaciones
-        text += self._formatNumber(partner_record.amount, 13, 2, True)
+        text += self._formatNumber(partner_record.amount, 14, 2, True)
         # Operación de seguro
         text += self._formatBoolean(partner_record.insurance_operation)
         # Arrendamiento local negocio
@@ -176,48 +209,58 @@ class L10nEsAeatMod347ExportToBoe(orm.TransientModel):
         text += self._formatNumber(partner_record.cash_amount, 13, 2)
         # Importe percibido por transmisiones de inmuebles sujetas a IVA
         text += self._formatNumber(
-            partner_record.real_state_transmissions_amount, 13, 2, True)
+            partner_record.real_state_transmissions_amount, 14, 2, True)
         # Año de devengo de las operaciones en efectivo
         text += (partner_record.origin_fiscalyear_id and
                  self._formatString(partner_record.origin_fiscalyear_id.code,
                                     4) or 4 * '0')
         # Importe de las operaciones del primer trimestre
-        text += self._formatNumber(partner_record.first_quarter, 13, 2, True)
+        text += self._formatNumber(partner_record.first_quarter, 14, 2, True)
         # Importe percibido por transmisiones de inmuebles sujates a Iva Primer
         # Trimestre
         text += self._formatNumber(
-            partner_record.first_quarter_real_state_transmission_amount, 13,
+            partner_record.first_quarter_real_state_transmission_amount, 14,
             2, True)
         # Importe de las operaciones del segundo trimestre
-        text += self._formatNumber(partner_record.second_quarter, 13, 2, True)
+        text += self._formatNumber(partner_record.second_quarter, 14, 2, True)
         # Importe percibido por transmisiones de inmuebles sujates a Iva
         # Segundo Trimestre
         text += self._formatNumber(
-            partner_record.second_quarter_real_state_transmission_amount, 13,
+            partner_record.second_quarter_real_state_transmission_amount, 14,
             2, True)
         # Importe de las operaciones del tercer trimestre
-        text += self._formatNumber(partner_record.third_quarter, 13, 2, True)
+        text += self._formatNumber(partner_record.third_quarter, 14, 2, True)
         # Importe percibido por transmisiones de inmuebles sujates a Iva Tercer
         # Trimestre
         text += self._formatNumber(
-            partner_record.third_quarter_real_state_transmission_amount, 13,
+            partner_record.third_quarter_real_state_transmission_amount, 14,
             2, True)
         # Importe de las operaciones del cuarto trimestre
-        text += self._formatNumber(partner_record.fourth_quarter, 13, 2, True)
+        text += self._formatNumber(partner_record.fourth_quarter, 14, 2, True)
         # Importe percibido por transmisiones de inmuebles sujates a Iva Cuarto
         # Trimestre
         text += self._formatNumber(
-            partner_record.fourth_quarter_real_state_transmission_amount, 13,
+            partner_record.fourth_quarter_real_state_transmission_amount, 14,
             2, True)
+        
+        #############
+        #TODO: Los dejamos en blanco/0 pq no disponemos de esta informacion
+		# SOLO ponemos el nif y el sujeto pasivo
+        # NIF operador comunitario
         text += self._formatString(partner_record.community_vat, 17)
+        # Operaciones régimen especial criterio de caja IVA
         text += self._formatBoolean(partner_record.cash_basis_operation)
+        # Operación con inversión del sujeto pasivo
         text += self._formatBoolean(partner_record.tax_person_operation)
+        # Operación con bienes vinculados o destinados a vincularse al régimen de depósito distinto
+        # del aduanero
         text += self._formatBoolean(partner_record.related_goods_operation)
-        # Importe en criterio de caja
-        text += self._formatNumber(0.0, 13, 2, True)
+        # Importe anual de las operaciones devengadas conforme al criterio de cja del iva
+        text += self._formatNumber(0.0, 14, 2, True)
+        #################
+        
         # Blancos
         text += 201 * ' '
-        # Sello electrónico
         text += '\r\n'
         assert len(text) == 502, \
             _("The type 2-D record (partner) must be 502 characters long")
@@ -237,29 +280,31 @@ class L10nEsAeatMod347ExportToBoe(orm.TransientModel):
             18-26      NIF del arrendatario
             27-35      NIF del representante legal
             36-75      Apellidos y nombre, razón social o denominación del
-                       declarado
+                       arrendatario
             76         Tipo de hoja
-            77-99      Blancos
-            100-114    Importe de la operación
+            *(old)77-99      Blancos
+            77-98      Blancos
+            *(old)100-114    Importe de la operación
+            99-114    Importe de la operación
             115        Situación del inmueble
             116-140    Referencia catastral
             141-333    Dirección y datos del inmueble
-            141–145    TIPO DE VÍA
-            146–195    NOMBRE VÍA PUBLICA
-            196–198    TIPO DE NUMERACIÓN
-            199–203    NUMERO DE CASA
-            204-206    CALIFICADOR DEL NUMERO
-            207–209    BLOQUE
-            210–212    PORTAL
-            213–215    ESCALERA
-            216–218    PLANTA O PISO
-            219–221    PUERTA
-            222–261    COMPLEMENTO.
-            262–291    LOCALIDAD O POBLACIÓN.
-            292–321    MUNICIPIO
-            322–326    CODIGO DE MUNICIPIO
-            327-328    CODIGO PROVINCIA
-            329-333    CODIGO POSTAL
+                141–145    TIPO DE VÍA
+                146–195    NOMBRE VÍA PUBLICA
+                196–198    TIPO DE NUMERACIÓN
+                199–203    NUMERO DE CASA
+                204-206    CALIFICADOR DEL NUMERO
+                207–209    BLOQUE
+                210–212    PORTAL
+                213–215    ESCALERA
+                216–218    PLANTA O PISO
+                219–221    PUERTA
+                222–261    COMPLEMENTO.
+                262–291    LOCALIDAD O POBLACIÓN.
+                292–321    MUNICIPIO
+                322–326    CODIGO DE MUNICIPIO
+                327-328    CODIGO PROVINCIA
+                329-333    CODIGO POSTAL
             334-500    Blancos
         """
         text = ''
@@ -282,7 +327,7 @@ class L10nEsAeatMod347ExportToBoe(orm.TransientModel):
         # Blancos
         text += 22 * ' '
         # Importe de las operaciones
-        text += self._formatNumber(partner_record.amount, 13, 2, True)
+        text += self._formatNumber(partner_record.amount, 14, 2, True)
         # Situación del inmueble
         text += self._formatNumber(partner_record.situation, 1)
         # Referencia catastral
@@ -298,7 +343,8 @@ class L10nEsAeatMod347ExportToBoe(orm.TransientModel):
         # CALIFICADOR DEL NUMERO
         text += self._formatString(partner_record.number_calification, 3)
         # BLOQUE
-        text += self._formatString(partner_record.block, 3)
+        #text += self._formatString(partner_record.block, 3)
+        text += self._formatString(partner_record.block, 4)
         # PORTAL
         text += self._formatString(partner_record.portal, 3)
         # ESCALERA
@@ -323,6 +369,7 @@ class L10nEsAeatMod347ExportToBoe(orm.TransientModel):
         text += 167 * ' '
         # Sello electrónico
         text += '\r\n'
+
         assert len(text) == 502, \
             _("The type 2-I record (real state) must be 502 characters long")
         return text

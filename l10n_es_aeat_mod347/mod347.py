@@ -42,6 +42,13 @@ class L10nEsAeatMod347Report(orm.Model):
             if tax_line.name.find('IRPF') == -1:
                 amount += tax_line.amount
         return amount
+    
+    def _calc_tax_person_operation(self, cr, uid, invoice, context=None):
+        amount = invoice.cc_amount_untaxed
+        for tax_line in invoice.tax_line:
+            if not tax_line.name.find('pasivo') == -1:          
+                return True            
+        return False
 
     def _get_default_address(self, cr, uid, partner, context=None):
         """Get the default invoice address of the partner"""
@@ -87,9 +94,14 @@ class L10nEsAeatMod347Report(orm.Model):
             # Calculate the invoiced amount
             # Remove IRPF tax for invoice amount
             invoice_amount = 0
+            tax_person_operation = False
             for invoice in invoices:
                 invoice_amount += self._calc_total_invoice(
                     cr, uid, invoice, context=context)
+                if invoice.type == 'in_invoice' and not tax_person_operation:
+                    tax_person_operation = self._calc_tax_person_operation(
+                        cr, uid, invoice, context=context)
+                 
             refund_amount = 0
             for refund in refunds:
                 refund_amount += self._calc_total_invoice(
@@ -110,9 +122,22 @@ class L10nEsAeatMod347Report(orm.Model):
                                                        partner.vat).groups()[1]
                 partner_country_code = (address.country_id and
                                         address.country_id.code or '')
+                
+                #if partner.vat:
+                #    partner_country_code, partner_vat = \
+                #        re.match("(ES){0,1}(.*)", partner.vat).groups()
+                
+                partner_vat = ''
+                community_vat = ''
+                list_country_code_comunitarios = ['AT', 'BE', 'BG', 'CY', 'CZ', 'DE', 'DK', 'EE', 'EL', 'FI', 'FR', 'GB', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'MT', 'NL', 'PL', 'PT', 'RO', 'SE', 'SI', 'SK']
                 if partner.vat:
-                    partner_country_code, partner_vat = \
-                        re.match("(ES){0,1}(.*)", partner.vat).groups()
+                    country_code_vat, partner_vat_tmp = \
+                        re.match(r"([A-Z]{0,2})(.*)", partner.vat).groups()
+                    if country_code_vat == 'ES':
+                        partner_vat = partner_vat_tmp
+                    elif country_code_vat in list_country_code_comunitarios:                        
+                        community_vat = country_code_vat + partner_vat_tmp.ljust(15, ' ')
+                        
                 # Create the partner record
                 partner_record_id = partner_record_obj.create(
                     cr, uid,
@@ -124,7 +149,10 @@ class L10nEsAeatMod347Report(orm.Model):
                      'partner_state_code': (address.state_id and
                                             address.state_id.code or ''),
                      'partner_country_code': partner_country_code,
-                     'amount': total_amount}, context=context)
+                     'amount': total_amount,
+                     'community_vat': community_vat,
+                     'tax_person_operation': tax_person_operation                     
+                     }, context=context,)
                 if invoice_type == 'out_invoice':
                     receivable_partner_record_id = partner_record_id
                 # Add invoices detail to the partner record
@@ -371,9 +399,18 @@ class L10nEsAeatMod347Report(orm.Model):
                     raise orm.except_orm(
                         _('Error!'),
                         _("All partner state code field must be filled.\n"
+                          "In the case of non-residents without a permanent establishment select \"Extranjero\".\n"
                           "Partner: %s (%s)") %
                         (partner_record.partner_id.name,
                          partner_record.partner_id.id))
+                if not partner_record.partner_country_code:
+                    raise orm.except_orm(
+                        _('Error!'),
+                        _("All partner country code field must be filled.\n"
+                          "Partner: %s (%s)") %
+                        (partner_record.partner_id.name,
+                         partner_record.partner_id.id))
+                    
                 if (not partner_record.partner_vat and
                         not partner_record.community_vat):
                     raise orm.except_orm(
